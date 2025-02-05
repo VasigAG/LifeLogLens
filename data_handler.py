@@ -1,8 +1,8 @@
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from models import Activity, get_db, SessionLocal
-from typing import Optional
+from typing import Optional, Tuple
 
 class DataHandler:
     def __init__(self):
@@ -19,9 +19,13 @@ class DataHandler:
         self.db.commit()
         self.current_status = activity
 
-    def get_current_status(self):
+    def get_current_status(self) -> Tuple[str, timedelta]:
         latest = self.db.query(Activity).order_by(Activity.timestamp.desc()).first()
-        return latest.activity if latest else "unavailable"
+        if not latest:
+            return "unavailable", timedelta(0)
+
+        duration = datetime.now() - latest.timestamp
+        return latest.activity, duration
 
     def get_all_activities(self):
         activities = self.db.query(Activity).all()
@@ -59,12 +63,12 @@ class DataHandler:
     def get_activity_stats(self):
         activities = self.db.query(Activity).all()
         if not activities:
-            return pd.DataFrame()
+            return pd.DataFrame({'category': [], 'count': []})
 
-        df = pd.DataFrame([
-            {'category': a.category} for a in activities
-        ])
-        return df['category'].value_counts().reset_index().rename(columns={'index': 'category', 'category': 'count'})
+        df = pd.DataFrame([{'category': a.category} for a in activities])
+        stats = df['category'].value_counts().reset_index()
+        stats.columns = ['category', 'count']
+        return stats
 
     def __del__(self):
         self.db.close()

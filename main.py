@@ -22,9 +22,13 @@ def get_data_handler():
 
 data_handler = get_data_handler()
 
-# Main header with current status
-current_status = data_handler.get_current_status()
+# Main header with current status and duration
+current_status, duration = data_handler.get_current_status()
+hours = int(duration.total_seconds() // 3600)
+minutes = int((duration.total_seconds() % 3600) // 60)
 st.markdown(f'<h1 class="main-header">Vasig is {current_status} right now</h1>', unsafe_allow_html=True)
+if current_status != "unavailable":
+    st.markdown(f'<h2 class="status-header">for {hours} hours {minutes} minutes</h2>', unsafe_allow_html=True)
 
 # Admin login
 with st.sidebar:
