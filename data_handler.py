@@ -5,6 +5,19 @@ from models import Activity, get_db, SessionLocal
 from typing import Optional, Tuple
 import pytz
 
+def format_duration(duration):
+    """Format timedelta into readable string"""
+    if not duration:
+        return 'ongoing'
+
+    total_seconds = int(duration.total_seconds())
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+
+    if hours > 0:
+        return f"{hours}h {minutes}m"
+    return f"{minutes}m"
+
 class DataHandler:
     def __init__(self):
         self.current_status = "unavailable"
@@ -46,7 +59,7 @@ class DataHandler:
                 'timestamp': a.timestamp.strftime('%Y-%m-%d %H:%M'),
                 'activity': a.activity,
                 'category': a.category,
-                'duration': str(a.duration) if a.duration else 'ongoing'
+                'duration': format_duration(a.duration)
             } for a in activities
         ])
 
