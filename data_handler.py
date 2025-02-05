@@ -1,52 +1,70 @@
 import pandas as pd
 from datetime import datetime
-import json
-import os
+from sqlalchemy.orm import Session
+from models import Activity, get_db, SessionLocal
+from typing import Optional
 
 class DataHandler:
     def __init__(self):
-        self.data_file = "life_log.json"
         self.current_status = "unavailable"
-        self.load_data()
+        self.db: Session = SessionLocal()
 
-    def load_data(self):
-        if os.path.exists(self.data_file):
-            with open(self.data_file, 'r') as f:
-                self.data = pd.DataFrame(json.load(f))
-        else:
-            self.data = pd.DataFrame(columns=['timestamp', 'activity', 'category'])
-            self.save_data()
-
-    def save_data(self):
-        with open(self.data_file, 'w') as f:
-            json.dump(self.data.to_dict('records'), f)
-
-    def add_entry(self, activity, category):
-        new_entry = {
-            'timestamp': datetime.now().isoformat(),
-            'activity': activity,
-            'category': category
-        }
-        self.data = pd.concat([self.data, pd.DataFrame([new_entry])], ignore_index=True)
+    def add_entry(self, activity: str, category: str):
+        new_entry = Activity(
+            activity=activity,
+            category=category,
+            timestamp=datetime.now()
+        )
+        self.db.add(new_entry)
+        self.db.commit()
         self.current_status = activity
-        self.save_data()
 
     def get_current_status(self):
-        if len(self.data) > 0:
-            return self.data.iloc[-1]['activity']
-        return "unavailable"
+        latest = self.db.query(Activity).order_by(Activity.timestamp.desc()).first()
+        return latest.activity if latest else "unavailable"
+
+    def get_all_activities(self):
+        activities = self.db.query(Activity).all()
+        if not activities:
+            return pd.DataFrame()
+
+        return pd.DataFrame([
+            {
+                'timestamp': a.timestamp,
+                'activity': a.activity,
+                'category': a.category
+            } for a in activities
+        ])
 
     def search_activity(self, date, time):
-        search_datetime = f"{date} {time}"
-        try:
-            search_dt = pd.to_datetime(search_datetime)
-            self.data['timestamp'] = pd.to_datetime(self.data['timestamp'])
-            closest_idx = abs(self.data['timestamp'] - search_dt).idxmin()
-            return self.data.iloc[closest_idx]
-        except:
+        search_datetime = datetime.combine(date, time)
+        result = self.db.query(Activity).order_by(
+            Activity.timestamp.desc()
+        ).all()
+
+        if not result:
             return None
 
+        df = pd.DataFrame([
+            {
+                'timestamp': r.timestamp,
+                'activity': r.activity,
+                'category': r.category
+            } for r in result
+        ])
+
+        closest_idx = abs(pd.to_datetime(df['timestamp']) - search_datetime).idxmin()
+        return df.iloc[closest_idx]
+
     def get_activity_stats(self):
-        if len(self.data) == 0:
+        activities = self.db.query(Activity).all()
+        if not activities:
             return pd.DataFrame()
-        return self.data['category'].value_counts().reset_index()
+
+        df = pd.DataFrame([
+            {'category': a.category} for a in activities
+        ])
+        return df['category'].value_counts().reset_index().rename(columns={'index': 'category', 'category': 'count'})
+
+    def __del__(self):
+        self.db.close()

@@ -34,17 +34,17 @@ with st.sidebar:
 # Main content
 if is_admin:
     st.sidebar.success("Admin access granted!")
-    
+
     # Entry form
     st.markdown('<div class="entry-form">', unsafe_allow_html=True)
     st.subheader("Log New Activity")
-    
+
     col1, col2 = st.columns(2)
     with col1:
         activity = st.text_input("What are you doing?")
     with col2:
         category = st.selectbox("Category", ["Work", "Personal", "Exercise", "Entertainment", "Other"])
-    
+
     if st.button("Log Activity"):
         if activity:
             data_handler.add_entry(activity, category)
@@ -70,7 +70,8 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Visualizations
 st.subheader("Activity Timeline")
-timeline = create_timeline(data_handler.data)
+activities_df = data_handler.get_all_activities()
+timeline = create_timeline(activities_df)
 if timeline:
     st.altair_chart(timeline, use_container_width=True)
 else:
