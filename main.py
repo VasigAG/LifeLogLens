@@ -61,11 +61,30 @@ if is_admin:
 st.subheader("Recent Activities")
 activities = data_handler.get_recent_activities()
 if not activities.empty:
-    st.dataframe(
-        activities,
-        use_container_width=True,
-        hide_index=True
-    )
+    # Create columns for data and delete button if admin
+    if is_admin:
+        for _, row in activities.iterrows():
+            col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 2, 1])
+            with col1:
+                st.write(row['timestamp'])
+            with col2:
+                st.write(row['activity'])
+            with col3:
+                st.write(row['category'])
+            with col4:
+                st.write(row['duration'])
+            with col5:
+                if st.button('🗑️', key=f"delete_{row['id']}"):
+                    data_handler.delete_entry(row['id'])
+                    st.success("Entry deleted!")
+                    st.rerun()
+    else:
+        # Regular view without delete buttons
+        st.dataframe(
+            activities.drop('id', axis=1),
+            use_container_width=True,
+            hide_index=True
+        )
 else:
     st.info("No activities logged yet")
 

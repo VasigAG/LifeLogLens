@@ -41,6 +41,14 @@ class DataHandler:
         self.db.commit()
         self.current_status = activity
 
+    def delete_entry(self, entry_id: int):
+        entry = self.db.query(Activity).filter(Activity.id == entry_id).first()
+        if entry:
+            self.db.delete(entry)
+            self.db.commit()
+            return True
+        return False
+
     def get_current_status(self) -> Tuple[str, timedelta]:
         latest = self.db.query(Activity).order_by(Activity.timestamp.desc()).first()
         if not latest:
@@ -54,34 +62,21 @@ class DataHandler:
         if not activities:
             return pd.DataFrame()
 
-        return pd.DataFrame([
-            {
+        data = []
+        for i, a in enumerate(activities):
+            duration = a.duration
+            if i == 0:  # For the most recent activity
+                duration = datetime.now() - a.timestamp
+
+            data.append({
+                'id': a.id,
                 'timestamp': a.timestamp.strftime('%Y-%m-%d %H:%M'),
                 'activity': a.activity,
                 'category': a.category,
-                'duration': format_duration(a.duration)
-            } for a in activities
-        ])
+                'duration': format_duration(duration)
+            })
 
-    def search_activity(self, date, time):
-        search_datetime = datetime.combine(date, time)
-        result = self.db.query(Activity).order_by(
-            Activity.timestamp.desc()
-        ).all()
-
-        if not result:
-            return None
-
-        df = pd.DataFrame([
-            {
-                'timestamp': r.timestamp,
-                'activity': r.activity,
-                'category': r.category
-            } for r in result
-        ])
-
-        closest_idx = abs(pd.to_datetime(df['timestamp']) - search_datetime).idxmin()
-        return df.iloc[closest_idx]
+        return pd.DataFrame(data)
 
     def get_activity_stats(self):
         activities = self.db.query(Activity).all()
