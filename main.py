@@ -22,8 +22,9 @@ def get_data_handler():
 
 data_handler = get_data_handler()
 
-# Main header
-st.markdown(f'<h1 class="main-header">Vasig is {data_handler.get_current_status()} right now</h1>', unsafe_allow_html=True)
+# Main header with current status
+current_status = data_handler.get_current_status()
+st.markdown(f'<h1 class="main-header">Vasig is {current_status} right now</h1>', unsafe_allow_html=True)
 
 # Admin login
 with st.sidebar:
@@ -49,6 +50,8 @@ if is_admin:
         if activity:
             data_handler.add_entry(activity, category)
             st.success("Activity logged successfully!")
+            # Force refresh to show new status
+            st.experimental_rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Search functionality
