@@ -1,23 +1,5 @@
 import plotly.express as px
-import altair as alt
 import pandas as pd
-
-def create_timeline(data):
-    if len(data) == 0:
-        return None
-
-    chart = alt.Chart(data).mark_line(point=True).encode(
-        x='timestamp:T',
-        y='activity:N',
-        color='category:N',
-        tooltip=['timestamp', 'activity', 'category']
-    ).properties(
-        width=800,
-        height=400,
-        title='Activity Timeline'
-    ).interactive()
-
-    return chart
 
 def create_activity_distribution(data):
     if len(data) == 0:
@@ -25,9 +7,9 @@ def create_activity_distribution(data):
 
     fig = px.pie(
         data,
-        values='count',
+        values='total_hours',
         names='category',
-        title='Activity Distribution by Category',
+        title='Time Distribution by Category (Hours)',
         color_discrete_sequence=px.colors.sequential.Greys
     )
     fig.update_layout(

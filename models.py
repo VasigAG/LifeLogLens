@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Interval
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
@@ -20,6 +20,7 @@ class Activity(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     activity = Column(String)
     category = Column(String)
+    duration = Column(Interval)  # Store duration of activity
 
 # Create tables
 Base.metadata.create_all(bind=engine)
