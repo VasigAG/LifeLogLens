@@ -26,9 +26,15 @@ data_handler = get_data_handler()
 current_status, duration = data_handler.get_current_status()
 hours = int(duration.total_seconds() // 3600)
 minutes = int((duration.total_seconds() % 3600) // 60)
-st.markdown(f'<h1 class="main-header">Vasig is {current_status} right now</h1>', unsafe_allow_html=True)
+st.markdown(
+    f'<div class="main-header">Vasig is<br>{current_status} right now</div>',
+    unsafe_allow_html=True
+)
 if current_status != "unavailable":
-    st.markdown(f'<h2 class="status-header">for {hours} hours {minutes} minutes</h2>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="status-header">for {hours} hours {minutes} minutes</div>',
+        unsafe_allow_html=True
+    )
 
 # Admin login
 with st.sidebar:
